@@ -1,8 +1,6 @@
-export const getLiveDataUrl = () =>
-  `https://raw.githubusercontent.com/amith-vp/Kerala-Dam-Water-Levels/main/live.json`;
-
+export const getLiveDataUrl = () => '/live.json';
 export const getHistoricalDataUrl = (damName: string) =>
-  `https://raw.githubusercontent.com/amith-vp/Kerala-Dam-Water-Levels/main/historic_data/${damName.replace(/\s+/g, '_')}.json`;
+  `/historic_data/${damName.replace(/\s+/g, '_')}.json`;
 
 export const fetchLiveDamData = async () => {
   try {

@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { useDamTimeSeries } from "@/hooks/useDamTimeSeries";
 import { motion, AnimatePresence } from "framer-motion";
 import { fetchHistoricalDamData } from "@/lib/api";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
@@ -65,6 +66,8 @@ const DamDetail = () => {
     queryFn: () => fetchHistoricalDamData(name || ""),
     enabled: !!name,
   });
+
+  const { loading: seriesLoading, series, latest } = useDamTimeSeries(damData || {});
 
   useEffect(() => {
     if (damData?.data && damData.data.length > 0) {
@@ -245,7 +248,7 @@ const DamDetail = () => {
             </Card>
           </motion.div>
 
-          <DamStatusCards 
+          <DamStatusCards
             currentData={currentData}
             damData={damData}
             waterLevelStats={waterLevelStats}
@@ -295,8 +298,9 @@ const DamDetail = () => {
                 title="Water Level Trend"
                 icon={LineChart}
                 iconColor="rgb(56, 189, 248)"
-                data={filteredData?.map(item => ({
+                data={filteredData.map(item => ({
                   ...item,
+                  waterLevel: item.waterLevel ? parseFloat(item.waterLevel) : null,
                   fullReservoirLevel: parseFloat(damData.FRL),
                   redAlertLevel: parseFloat(damData.redLevel),
                   orangeAlertLevel: parseFloat(damData.orangeLevel)
@@ -308,7 +312,11 @@ const DamDetail = () => {
                   { type: 'line', dataKey: 'orangeAlertLevel', color: 'rgb(249, 115, 22)', label: 'Orange Alert' }
                 ]}
                 unit="m"
-                domain={waterLevelDomain}
+                domain={calculateAxisDomain(
+                  series.map(d => d.waterLevel ?? 0).concat(
+                    [parseFloat(damData.FRL), parseFloat(damData.redLevel), parseFloat(damData.orangeLevel)]
+                  )
+                )}
               />
             </motion.div>
 

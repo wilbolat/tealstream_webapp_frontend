@@ -91,6 +91,8 @@ const DamList = ({ dams, isLoading, error }: DamListProps) => {
   const [sortField, setSortField] = useState<SortField>("storagePercentage");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
 
+  console.log('Loaded dams:', dams);
+  
   const toggleSortDirection = () => {
     setSortDirection(prev => prev === "asc" ? "desc" : "asc");
   };
@@ -231,7 +233,7 @@ const DamList = ({ dams, isLoading, error }: DamListProps) => {
         <CardHeader className="p-2 sm:p-4 border-b bg-muted">
           <div className="flex items-center w-full">
             <CardTitle className="text-md sm:text-sm lg:text-lg font-bold flex-1 min-w-0 truncate pr-3">
-              Kerala Dam Water Level
+              Metro Vancouver Dams
             </CardTitle>
             <div className="flex items-center gap-2.5 shrink-0">
               <div className="h-9 w-9 sm:h-10 sm:w-10 backdrop-blur-sm bg-background/50 border border-border/50 rounded-lg overflow-hidden flex items-center justify-center">
