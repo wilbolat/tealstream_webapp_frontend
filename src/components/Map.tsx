@@ -33,8 +33,8 @@ const Map = ({ dams, lastUpdate }: MapProps) => {
     mapboxMap.current = new mapboxgl.Map({
       container: mapRef.current,
       style: 'mapbox://styles/mapbox/standard',
-      center: [77.0394, 9.9956],
-      zoom: 8.9,
+      center: [-122.5580, 49.3579],
+      zoom: 8,
       pitch: 0,
       bearing: 0,
       minZoom: 6,

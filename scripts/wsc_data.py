@@ -2,7 +2,7 @@ import pandas as pd
 import json
 
 # Load the CSV, skip the metadata rows
-file_path = '08MH149_HGD_20250702T0153.csv'
+file_path = '08MG012_HGD_20250704T0328.csv'
 df = pd.read_csv(file_path, skiprows=9)  # Skip first 9 rows
 
 # Remove any empty rows
@@ -31,6 +31,6 @@ for _, row in df.iterrows():
     })
 
 # Write to JSON file
-with open('coquitlam_formatted.json', 'w') as f:
+with open('harisson_formatted.json', 'w') as f:
     json.dump(data, f, indent=2)
 print("Saved formatted data to coquitlam_formatted.json")
