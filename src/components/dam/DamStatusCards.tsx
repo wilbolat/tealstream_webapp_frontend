@@ -2,7 +2,15 @@ import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { AnimatedNumber } from "@/components/ui/animated-number";
-import { Droplet, Gauge, CloudRain, ArrowDown, ArrowUp, Zap, Waves } from "lucide-react";
+import {
+  Droplet,
+  Gauge,
+  CloudRain,
+  ArrowDown,
+  ArrowUp,
+  Zap,
+  Waves,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface DamStatusCardsProps {
@@ -233,7 +241,7 @@ export function DamStatusCards({ currentData, damData, waterLevelStats }: DamSta
               </div>
             </CardContent>
           </Card>
-        </motion.div>
+        </motion.div> 
       </div>
     </motion.div>
   );

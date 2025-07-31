@@ -247,13 +247,13 @@ const DamDetail = () => {
               </CardHeader>
             </Card>
           </motion.div>
-
+          {/*
           <DamStatusCards
             currentData={currentData}
             damData={damData}
             waterLevelStats={waterLevelStats}
           />
-
+          */}
           <motion.div 
             className="grid grid-cols-1 gap-6"
             initial="hidden"

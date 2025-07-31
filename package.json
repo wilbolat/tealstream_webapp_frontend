@@ -9,7 +9,8 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy": "git pull origin main && npm ci && npm run build && sudo nginx -s reload"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
