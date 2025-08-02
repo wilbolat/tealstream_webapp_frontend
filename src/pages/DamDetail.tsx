@@ -92,8 +92,8 @@ const DamDetail = () => {
     const filtered = damData.data.filter((item) => {
       const [day, month, year] = item.date.split('.');
       const date = startOfDay(new Date(parseInt(year), parseInt(month) - 1, parseInt(day)));
-      return isWithinInterval(date, { 
-        start: startOfDay(dateRange.from), 
+      return isWithinInterval(date, {
+        start: startOfDay(dateRange.from),
         end: startOfDay(dateRange.to || referenceDate)
       });
     });
@@ -214,6 +214,21 @@ const DamDetail = () => {
   ].filter(val => !isNaN(val) && val > 0);
   const waterLevelDomain = calculateAxisDomain([...waterLevels, ...referenceLines]);
 
+  // Determine current alert status
+  const currentLevel = parseFloat(currentData.waterLevel);
+  const redThreshold = parseFloat(damData.redLevel);
+  const orangeThreshold = parseFloat(damData.orangeLevel);
+
+  let currentAlert = "No Alert";
+  if (!isNaN(currentLevel)) {
+    if (currentLevel >= redThreshold) {
+      currentAlert = "Red Alert";
+    } else if (currentLevel >= orangeThreshold) {
+      currentAlert = "Orange Alert";
+    }
+  }
+
+
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-gradient-to-br from-blue-50 to-teal-50 dark:from-black dark:to-slate-950">
       <Helmet>
@@ -226,7 +241,7 @@ const DamDetail = () => {
         <meta property="twitter:title" content={`${damData.name} Dam Water Levels | Real-time Monitoring`} />
         <meta property="twitter:description" content={`Current water level of ${damData.name} dam is ${currentData?.waterLevel} meters.`} />
       </Helmet>
-      <DamHeader 
+      <DamHeader
         dateRange={dateRange}
         onDateRangeChange={handleDateRangeChange}
         isTimeRangeLoading={isTimeRangeLoading}
@@ -243,18 +258,32 @@ const DamDetail = () => {
           >
             <Card>
               <CardHeader>
-                <CardTitle className="text-3xl">{damData.name} Dam Water Levels</CardTitle>
+                <CardTitle className="text-3xl flex items-center gap-4">
+                  {damData.name} Dam 
+                  <span
+                    className={
+                      "px-2 py-1 rounded font-medium text-3xl " +
+                      (currentAlert === "No Alert"
+                        ? "bg-green-100 text-green-800"
+                        : currentAlert === "Orange Alert"
+                          ? "bg-yellow-100 text-yellow-800"
+                          : "bg-red-100 text-red-800")
+                    }
+                  >
+                    {currentAlert}
+                  </span>
+                </CardTitle>
               </CardHeader>
             </Card>
           </motion.div>
-          {/*
+
           <DamStatusCards
             currentData={currentData}
             damData={damData}
             waterLevelStats={waterLevelStats}
           />
-          */}
-          <motion.div 
+
+          <motion.div
             className="grid grid-cols-1 gap-6"
             initial="hidden"
             animate="show"
@@ -408,7 +437,7 @@ const DamDetail = () => {
 
       <AnimatePresence>
         {isLoading && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
