@@ -1,6 +1,6 @@
 import * as React from "react"
 import { Github } from "lucide-react"
-
+{/*}
 const Footer = () => {
   return (
     <footer className="w-full border-t bg-background/50 backdrop-blur-sm">
@@ -24,3 +24,5 @@ const Footer = () => {
 }
 
 export { Footer }
+
+*/}

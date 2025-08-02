@@ -4,7 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/components/ui/theme-provider";
-import { Footer } from "@/components/ui/footer";
+{/*import { Footer } from "@/components/ui/footer";*/}
 import Index from "./pages/Index";
 import DamDetail from "./pages/DamDetail";
 import NotFound from "./pages/NotFound";
@@ -26,7 +26,7 @@ const App = () => (
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </div>
-            <Footer />
+{/*            <Footer /> */}
           </BrowserRouter>
         </div>
       </TooltipProvider>
