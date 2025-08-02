@@ -23,6 +23,7 @@ interface DamStatusCardsProps {
   } | null;
 }
 
+
 function getAlertZone(waterLevel: number, damData: any) {
   if (waterLevel >= parseFloat(damData.redLevel)) return 'red';
   if (waterLevel >= parseFloat(damData.orangeLevel)) return 'orange';
@@ -32,10 +33,33 @@ function getAlertZone(waterLevel: number, damData: any) {
 
 export function DamStatusCards({ currentData, damData, waterLevelStats }: DamStatusCardsProps) {
   const currentAlertZone = currentData ? getAlertZone(parseFloat(currentData.waterLevel), damData) : 'normal';
+  // 1) compute spillway status
+  const currentLevel = parseFloat(currentData?.waterLevel ?? "0");
+  const spillElev = parseFloat(damData.spillwayElevation ?? "0");
+  const isSpilling =
+    !isNaN(currentLevel) &&
+    !isNaN(spillElev) &&
+    currentLevel > spillElev;
+  // 2) compute freeboard
+  const crestElev = parseFloat(damData.crestElevation ?? "0");
+  const currentFreebd = crestElev - currentLevel;
+
+  // derive min/avg/max freeboard from your waterLevelStats
+  let freebdStats: { min: number; avg: number; max: number } | null = null;
+  if (waterLevelStats) {
+    freebdStats = {
+      // at highest water you have the smallest freeboard
+      min: crestElev - waterLevelStats.max,
+      // average freeboard
+      avg: crestElev - waterLevelStats.avg,
+      // at lowest water you have the largest freeboard
+      max: crestElev - waterLevelStats.min,
+    };
+  }
 
   return (
-    <motion.div 
-      className="grid grid-cols-1 gap-4 md:grid-cols-4"
+    <motion.div
+      className="grid grid-cols-1 gap-4 md:grid-cols-3"
       initial="hidden"
       animate="show"
       variants={{
@@ -65,8 +89,8 @@ export function DamStatusCards({ currentData, damData, waterLevelStats }: DamSta
             <div className="flex flex-col h-full">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xl md:text-2xl font-bold tracking-tight">
-                  <AnimatedNumber 
-                    value={currentData?.waterLevel ? parseFloat(currentData.waterLevel) : 0} 
+                  <AnimatedNumber
+                    value={currentData?.waterLevel ? parseFloat(currentData.waterLevel) : 0}
                     decimals={2}
                     suffix=" m"
                   />
@@ -80,8 +104,8 @@ export function DamStatusCards({ currentData, damData, waterLevelStats }: DamSta
                     "shadow-sm"
                   )}>
                     {currentAlertZone === 'red' ? 'Red Alert' :
-                    currentAlertZone === 'orange' ? 'Orange Alert' :
-                    currentAlertZone === 'blue' ? 'Blue Alert' : 'No Alert'}
+                      currentAlertZone === 'orange' ? 'Orange Alert' :
+                        currentAlertZone === 'blue' ? 'Blue Alert' : 'No Alert'}
                   </div>
                 )}
               </div>
@@ -112,7 +136,29 @@ export function DamStatusCards({ currentData, damData, waterLevelStats }: DamSta
         </Card>
       </motion.div>
 
-      {/* Storage Card */}
+      {/* ↓ New Spillway Card ↓ */}
+      <motion.div
+        variants={{
+          hidden: { opacity: 0, y: 20 },
+          show: { opacity: 1, y: 0 },
+        }}
+      >
+        <Card className="bg-white/50 dark:bg-black/40 backdrop-blur-sm border-l-4 border-l-blue-500 hover:shadow-lg h-[160px] flex flex-col">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm md:text-base font-medium text-muted-foreground flex items-center gap-2">
+              <Waves className="h-4 w-4 text-blue-500" />
+              Spillway
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex-1 flex items-center justify-center">
+            <span className="text-xl md:text-2xl font-bold">
+              {isSpilling ? "Spilling" : "Not Spilling"}
+            </span>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* Storage Card 
       <motion.div variants={{
         hidden: { opacity: 0, y: 20 },
         show: { opacity: 1, y: 0 }
@@ -128,23 +174,23 @@ export function DamStatusCards({ currentData, damData, waterLevelStats }: DamSta
             <div className="flex flex-col h-full">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xl md:text-2xl font-bold tracking-tight flex items-baseline">
-                  <AnimatedNumber 
+                  <AnimatedNumber
                     value={currentData?.storagePercentage ? parseFloat(currentData.storagePercentage) : 0}
                     decimals={1}
                     suffix="%"
                   />
                 </span>
                 <div className="text-xs md:text-sm text-muted-foreground">
-                  <AnimatedNumber 
+                  <AnimatedNumber
                     value={parseFloat(currentData?.liveStorage || "0")}
                     decimals={1}
                     suffix=" MCM"
                   />
                 </div>
               </div>
-              <Progress 
-                value={(parseFloat(currentData?.liveStorage || "0") / parseFloat(damData.liveStorageAtFRL)) * 100} 
-                className="h-2" 
+              <Progress
+                value={(parseFloat(currentData?.liveStorage || "0") / parseFloat(damData.liveStorageAtFRL)) * 100}
+                className="h-2"
               />
               <div className="flex items-center justify-between text-xs md:text-sm text-muted-foreground mt-2">
                 <span>Total Capacity</span>
@@ -155,10 +201,63 @@ export function DamStatusCards({ currentData, damData, waterLevelStats }: DamSta
             </div>
           </CardContent>
         </Card>
-      </motion.div>
+      </motion.div> 
+*/}
 
-      <div className="grid grid-cols-2 gap-4 md:contents">
-        {/* Inflow Card */}
+
+        {/* Available Freeboard Card */}
+        <motion.div
+          variants={{
+            hidden: { opacity: 0, y: 20 },
+            show: { opacity: 1, y: 0 },
+          }}
+        >
+          <Card className="bg-white/50 dark:bg-black/40 backdrop-blur-sm border-l-4 border-l-blue-500 transition-all duration-300 hover:shadow-lg h-[160px] flex flex-col">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm md:text-base font-medium text-muted-foreground flex items-center gap-2">
+                <ArrowDown className="h-4 w-4 text-blue-500" />
+                Available Freeboard
+              </CardTitle>
+            </CardHeader>
+
+            <CardContent className="flex-1 flex flex-col">
+              {/* current freeboard */}
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xl md:text-2xl font-bold tracking-tight">
+                  <AnimatedNumber
+                    value={currentFreebd}
+                    decimals={2}
+                    suffix=" m"
+                  />
+                </span>
+              </div>
+
+              {/* min/avg/max freeboard */}
+              {freebdStats && (
+                <div className="grid grid-cols-3 gap-1 mt-auto">
+                  {(['Min', 'Avg', 'Max'] as const).map(label => {
+                    const val = freebdStats[label.toLowerCase()];
+                    return (
+                      <div
+                        key={label}
+                        className="flex flex-col items-center p-1.5 rounded-md bg-background/50 dark:bg-black/30"
+                      >
+                        <span className="text-xs md:text-sm text-muted-foreground">
+                          {label}
+                        </span>
+                        <span className="text-xs md:text-sm font-medium">
+                          <AnimatedNumber value={val} decimals={2} suffix=" m" />
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Inflow Card 
         <motion.div variants={{
           hidden: { opacity: 0, y: 20 },
           show: { opacity: 1, y: 0 }
@@ -174,7 +273,7 @@ export function DamStatusCards({ currentData, damData, waterLevelStats }: DamSta
               <div className="flex flex-col h-full">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xl md:text-2xl font-bold tracking-tight">
-                    <AnimatedNumber 
+                    <AnimatedNumber
                       value={currentData?.inflow ? parseFloat(currentData.inflow) : 0}
                       decimals={1}
                       suffix=" m³/s"
@@ -194,8 +293,11 @@ export function DamStatusCards({ currentData, damData, waterLevelStats }: DamSta
             </CardContent>
           </Card>
         </motion.div>
+*/}
+        
 
-        {/* Outflow Card */}
+
+        {/* Outflow Card 
         <motion.div variants={{
           hidden: { opacity: 0, y: 20 },
           show: { opacity: 1, y: 0 }
@@ -211,7 +313,7 @@ export function DamStatusCards({ currentData, damData, waterLevelStats }: DamSta
               <div className="flex flex-col h-full">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xl md:text-2xl font-bold tracking-tight">
-                    <AnimatedNumber 
+                    <AnimatedNumber
                       value={currentData?.totalOutflow ? parseFloat(currentData.totalOutflow) : 0}
                       decimals={1}
                       suffix=" m³/s"
@@ -241,8 +343,9 @@ export function DamStatusCards({ currentData, damData, waterLevelStats }: DamSta
               </div>
             </CardContent>
           </Card>
-        </motion.div> 
-      </div>
-    </motion.div>
+        </motion.div>
+        */}
+      
+    </motion.div >
   );
 }
