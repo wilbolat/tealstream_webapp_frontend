@@ -36,6 +36,7 @@ export function DamStatusCards({ currentData, damData, waterLevelStats }: DamSta
   // 1) compute spillway status
   const currentLevel = parseFloat(currentData?.waterLevel ?? "0");
   const spillElev = parseFloat(damData.spillwayElevation ?? "0");
+  const flowDepth = currentLevel - spillElev;
   const isSpilling =
     !isNaN(currentLevel) &&
     !isNaN(spillElev) &&
@@ -136,7 +137,7 @@ export function DamStatusCards({ currentData, damData, waterLevelStats }: DamSta
         </Card>
       </motion.div>
 
-      {/* ↓ New Spillway Card ↓ */}
+      {/* ↓  Spillway Card ↓ */}
       <motion.div
         variants={{
           hidden: { opacity: 0, y: 20 },
@@ -150,9 +151,15 @@ export function DamStatusCards({ currentData, damData, waterLevelStats }: DamSta
               Spillway
             </CardTitle>
           </CardHeader>
-          <CardContent className="flex-1 flex items-center justify-center">
+          <CardContent className="flex-1 flex flex-col items-center justify-center space-y-2">
             <span className="text-xl md:text-2xl font-bold">
               {isSpilling ? "Spilling" : "Not Spilling"}
+            </span>
+            <span className="text-sm text-muted-foreground">
+              Spillway Crest Elevation = {parseFloat(damData.spillwayElevation ?? "0").toFixed(2)} m
+            </span>
+            <span className="text-sm text-muted-foreground">
+              Flow depth over crest = {flowDepth.toFixed(2)} m
             </span>
           </CardContent>
         </Card>
@@ -205,59 +212,59 @@ export function DamStatusCards({ currentData, damData, waterLevelStats }: DamSta
 */}
 
 
-        {/* Available Freeboard Card */}
-        <motion.div
-          variants={{
-            hidden: { opacity: 0, y: 20 },
-            show: { opacity: 1, y: 0 },
-          }}
-        >
-          <Card className="bg-white/50 dark:bg-black/40 backdrop-blur-sm border-l-4 border-l-blue-500 transition-all duration-300 hover:shadow-lg h-[160px] flex flex-col">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm md:text-base font-medium text-muted-foreground flex items-center gap-2">
-                <ArrowDown className="h-4 w-4 text-blue-500" />
-                Available Freeboard
-              </CardTitle>
-            </CardHeader>
+      {/* Available Freeboard Card */}
+      <motion.div
+        variants={{
+          hidden: { opacity: 0, y: 20 },
+          show: { opacity: 1, y: 0 },
+        }}
+      >
+        <Card className="bg-white/50 dark:bg-black/40 backdrop-blur-sm border-l-4 border-l-blue-500 transition-all duration-300 hover:shadow-lg h-[160px] flex flex-col">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm md:text-base font-medium text-muted-foreground flex items-center gap-2">
+              <ArrowDown className="h-4 w-4 text-blue-500" />
+              Available Freeboard
+            </CardTitle>
+          </CardHeader>
 
-            <CardContent className="flex-1 flex flex-col">
-              {/* current freeboard */}
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xl md:text-2xl font-bold tracking-tight">
-                  <AnimatedNumber
-                    value={currentFreebd}
-                    decimals={2}
-                    suffix=" m"
-                  />
-                </span>
+          <CardContent className="flex-1 flex flex-col">
+            {/* current freeboard */}
+            <div className="flex items-center justify-center mb-2">
+              <span className="text-xl md:text-2xl font-bold tracking-tight">
+                <AnimatedNumber
+                  value={currentFreebd}
+                  decimals={2}
+                  suffix=" m"
+                />
+              </span>
+            </div>
+
+            {/* min/avg/max freeboard */}
+            {freebdStats && (
+              <div className="grid grid-cols-3 gap-1 mt-auto">
+                {(['Min', 'Avg', 'Max'] as const).map(label => {
+                  const val = freebdStats[label.toLowerCase()];
+                  return (
+                    <div
+                      key={label}
+                      className="flex flex-col items-center p-1.5 rounded-md bg-background/50 dark:bg-black/30"
+                    >
+                      <span className="text-xs md:text-sm text-muted-foreground">
+                        {label}
+                      </span>
+                      <span className="text-xs md:text-sm font-medium">
+                        <AnimatedNumber value={val} decimals={2} suffix=" m" />
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
+            )}
+          </CardContent>
+        </Card>
+      </motion.div>
 
-              {/* min/avg/max freeboard */}
-              {freebdStats && (
-                <div className="grid grid-cols-3 gap-1 mt-auto">
-                  {(['Min', 'Avg', 'Max'] as const).map(label => {
-                    const val = freebdStats[label.toLowerCase()];
-                    return (
-                      <div
-                        key={label}
-                        className="flex flex-col items-center p-1.5 rounded-md bg-background/50 dark:bg-black/30"
-                      >
-                        <span className="text-xs md:text-sm text-muted-foreground">
-                          {label}
-                        </span>
-                        <span className="text-xs md:text-sm font-medium">
-                          <AnimatedNumber value={val} decimals={2} suffix=" m" />
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* Inflow Card 
+      {/* Inflow Card 
         <motion.div variants={{
           hidden: { opacity: 0, y: 20 },
           show: { opacity: 1, y: 0 }
@@ -294,10 +301,10 @@ export function DamStatusCards({ currentData, damData, waterLevelStats }: DamSta
           </Card>
         </motion.div>
 */}
-        
 
 
-        {/* Outflow Card 
+
+      {/* Outflow Card 
         <motion.div variants={{
           hidden: { opacity: 0, y: 20 },
           show: { opacity: 1, y: 0 }
@@ -345,7 +352,7 @@ export function DamStatusCards({ currentData, damData, waterLevelStats }: DamSta
           </Card>
         </motion.div>
         */}
-      
+
     </motion.div >
   );
 }

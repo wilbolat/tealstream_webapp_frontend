@@ -349,7 +349,7 @@ const DamDetail = () => {
               />
             </motion.div>
 
-            {/* Section 3: Storage and Inflow */}
+            {/* Section 3: Storage and Inflow 
             <motion.div variants={{
               hidden: { opacity: 0, x: -20 },
               show: { opacity: 1, x: 0 }
@@ -389,8 +389,9 @@ const DamDetail = () => {
                 />
               </div>
             </motion.div>
+*/}
 
-            {/* Section 4: Outflow and Rainfall */}
+            {/* Section 4: Outflow and Rainfall 
             <motion.div variants={{
               hidden: { opacity: 0, x: -20 },
               show: { opacity: 1, x: 0 }
@@ -431,6 +432,7 @@ const DamDetail = () => {
 
               </div>
             </motion.div>
+            */}
           </motion.div>
         </div>
       </div>
