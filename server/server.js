@@ -1,8 +1,9 @@
 // server/server.js
+import AWS from "aws-sdk";
 import dotenv from "dotenv";
 import express from "express";
 import multer from "multer";
-import { uploadImageToSpaces } from "./spacesClient.js";
+import { s3, BUCKET, uploadImageToSpaces } from "./spacesClient.js";
 
 // load env vars
 dotenv.config();
@@ -30,6 +31,28 @@ app.post("/upload-image", upload.single("image"), async (req, res) => {
   } catch (err) {
     console.error("Upload failed:", err);
     return res.status(500).json({ error: "Upload to Spaces failed" });
+  }
+});
+
+app.get("/snapshot-info", async (req, res) => {
+  const damId = req.query.damId;
+  if (!damId) return res.status(400).json({ error: "damId required" });
+
+  const key = `images/${damId}/latest.jpg`;
+  try {
+    const head = await s3.headObject({
+      Bucket: BUCKET,
+      Key: key
+    }).promise();
+    // Log the raw UTC timestamp
+    console.log("💡 LastModified (raw UTC):", head.LastModified.toISOString());
+
+    return res.json({
+      url: `https://${BUCKET}.${process.env.SPACES_ENDPOINT}/${key}`,
+      lastModified: head.LastModified,
+    });
+  } catch (err) {
+    return res.status(404).json({ error: "Snapshot not found" });
   }
 });
 

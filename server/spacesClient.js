@@ -7,13 +7,13 @@ dotenv.config();
 
 // configure your Spaces endpoint & credentials
 const spacesEndpoint = new AWS.Endpoint(process.env.SPACES_ENDPOINT);
-const s3 = new AWS.S3({
+export const s3 = new AWS.S3({
   endpoint: spacesEndpoint,
   accessKeyId: process.env.SPACES_KEY,
   secretAccessKey: process.env.SPACES_SECRET,
 });
 
-const BUCKET = process.env.SPACES_BUCKET;
+export const BUCKET = process.env.SPACES_BUCKET;
 
 /**
  * Uploads a JPEG buffer to Spaces under

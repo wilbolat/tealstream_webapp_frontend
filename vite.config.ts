@@ -7,6 +7,12 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    proxy: {
+      "/snapshot-info": {
+        target: "http://localhost:9001",
+        changeOrigin: true,
+      },
+    },
   },
   plugins: [
     react(),
@@ -17,3 +23,4 @@ export default defineConfig(({ mode }) => ({
     },
   },
 }));
+

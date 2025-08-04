@@ -68,6 +68,12 @@ const DamDetail = () => {
 
   const { loading: seriesLoading, series, latest } = useDamTimeSeries(damData || {});
 
+  const { data: snapshotInfo, isLoading: infoLoading } = useQuery({
+    queryKey: ["snapshotInfo", damData?.id],
+    queryFn: () => fetch(`/snapshot-info?damId=${damData?.id}`).then(r => r.json()),
+    enabled: !!damData?.id,
+  });
+
   useEffect(() => {
     if (damData?.data && damData.data.length > 0) {
       const mostRecentDate = damData.data.reduce((latest, item) => {
@@ -311,7 +317,7 @@ const DamDetail = () => {
                 {/* Live Snapshot instead of HLS feed */}
                 <Card>
                   <CardHeader>
-                    <CardTitle>Live Snapshot</CardTitle>
+                    <CardTitle>Upstream View</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <img
@@ -319,6 +325,22 @@ const DamDetail = () => {
                       alt={`Snapshot of dam ${damData.name}`}
                       className="w-full h-auto object-cover rounded-lg"
                     />
+                    {/* show timestamp once loaded */}
+                    {!infoLoading && snapshotInfo?.lastModified && (
+                      <div className="mt-2 text-sm text-gray-500">
+                        Taken at{" "}
+                        {new Intl.DateTimeFormat("en-US", {
+                          timeZone: "America/Los_Angeles",
+                          month: "short",    // e.g. “Aug”
+                          day: "numeric",    // e.g. “2”
+                          year: "numeric",   // e.g. “2025”
+                          hour: "numeric",   // e.g. “4”
+                          minute: "2-digit", // e.g. “04”
+                          hour12: true,      // “PM”
+                          timeZoneName: "short", // “PDT”
+                        }).format(new Date(snapshotInfo.lastModified))}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
                 {/* Dam figure with water level */}
