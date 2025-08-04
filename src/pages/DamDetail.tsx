@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useDamTimeSeries } from "@/hooks/useDamTimeSeries";
 import { motion, AnimatePresence } from "framer-motion";
 import { fetchHistoricalDamData } from "@/lib/api";
-import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { LineChart, Building2, CloudRain, ArrowDown, ArrowUp } from "lucide-react";
 import { DateRange } from "react-day-picker";
 import { parse, parseISO, isWithinInterval, format, startOfDay, addMonths, subYears } from "date-fns";
@@ -15,7 +15,6 @@ import { TrendChart } from "@/components/dam/TrendChart";
 import { Visualization } from "@/components/dam/Visualization";
 import { Helmet } from 'react-helmet';
 import CameraFeedCard from "@/components/dam/CameraFeedCard";
-
 
 
 const TIME_RANGE_STORAGE_KEY = 'dam-time-range';
@@ -193,6 +192,8 @@ const DamDetail = () => {
     );
   }
 
+  const snapshotUrl = `https://tealstream.tor1.digitaloceanspaces.com/images/${damData.id}/latest.jpg?ts=${Date.now()}`;
+  console.log("Snapshot URL is:", snapshotUrl);
   const currentData = filteredData?.[filteredData.length - 1] || damData?.data[damData.data.length - 1];
 
   // domains for charts
@@ -259,7 +260,7 @@ const DamDetail = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="text-3xl flex items-center gap-4">
-                  {damData.name} Dam 
+                  {damData.name} Dam
                   <span
                     className={
                       "px-2 py-1 rounded font-medium text-3xl " +
@@ -307,8 +308,20 @@ const DamDetail = () => {
                 {/*
                 <DamSpecifications damData={damData} />
                 */}
-                {/* Camera feed card */}
-                <CameraFeedCard src={`http://159.203.59.244:8888/live/damtest/index.m3u8`} />
+                {/* Live Snapshot instead of HLS feed */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Live Snapshot</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <img
+                      src={snapshotUrl}
+                      alt={`Snapshot of dam ${damData.name}`}
+                      className="w-full h-auto object-cover rounded-lg"
+                    />
+                  </CardContent>
+                </Card>
+                {/* Dam figure with water level */}
                 <Visualization
                   data={visualizationData}
                   currentIndex={visualizationIndex}
