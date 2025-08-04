@@ -1,11 +1,9 @@
 // server/server.js
-import AWS from "aws-sdk";
 import dotenv from "dotenv";
 import express from "express";
 import multer from "multer";
 import { s3, BUCKET, uploadImageToSpaces } from "./spacesClient.js";
 
-// load env vars
 dotenv.config();
 
 const app = express();
@@ -13,9 +11,9 @@ const upload = multer({ storage: multer.memoryStorage() });
 const HTTP_PORT = process.env.HTTP_PORT || 9001;
 
 // health‐check
-app.get("/health", (_req, res) =>
-  res.json({ status: "ok", port: HTTP_PORT })
-);
+app.get("/health", (_req, res) => {
+  res.json({ status: "ok", port: HTTP_PORT });
+});
 
 // image upload endpoint
 app.post("/upload-image", upload.single("image"), async (req, res) => {
@@ -34,28 +32,42 @@ app.post("/upload-image", upload.single("image"), async (req, res) => {
   }
 });
 
+// snapshot-info endpoint
 app.get("/snapshot-info", async (req, res) => {
   const damId = req.query.damId;
-  if (!damId) return res.status(400).json({ error: "damId required" });
+  if (!damId) {
+    return res.status(400).json({ error: "damId required" });
+  }
 
-  const key = `images/${damId}/latest.jpg`;
+  const prefix = `images/${damId}/`;
   try {
-    const head = await s3.headObject({
-      Bucket: BUCKET,
-      Key: key
-    }).promise();
-    // Log the raw UTC timestamp
-    console.log("💡 LastModified (raw UTC):", head.LastModified.toISOString());
+    const list = await s3
+      .listObjectsV2({ Bucket: BUCKET, Prefix: prefix })
+      .promise();
+
+    if (!list.Contents || list.Contents.length === 0) {
+      return res.status(404).json({ error: "No snapshots found" });
+    }
+
+    // Find the most recently modified object
+    const latestObj = list.Contents.reduce((a, b) =>
+      a.LastModified > b.LastModified ? a : b
+    );
+
+    const key = latestObj.Key;
+    const url = `https://${BUCKET}.${process.env.SPACES_ENDPOINT}/${key}`;
 
     return res.json({
-      url: `https://${BUCKET}.${process.env.SPACES_ENDPOINT}/${key}`,
-      lastModified: head.LastModified,
+      url,
+      lastModified: latestObj.LastModified,
     });
   } catch (err) {
-    return res.status(404).json({ error: "Snapshot not found" });
+    console.error("snapshot-info failed:", err);
+    return res.status(500).json({ error: "Server error" });
   }
-});
+}); // ← Make sure this closes the snapshot-info route
 
-app.listen(HTTP_PORT, () =>
-  console.log(`Image ingestion HTTP server listening on port ${HTTP_PORT}`)
-);
+// start the server
+app.listen(HTTP_PORT, () => {
+  console.log(`Image ingestion HTTP server listening on port ${HTTP_PORT}`);
+});

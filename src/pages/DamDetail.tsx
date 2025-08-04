@@ -198,7 +198,10 @@ const DamDetail = () => {
     );
   }
 
-  const snapshotUrl = `https://tealstream.tor1.digitaloceanspaces.com/images/${damData.id}/latest.jpg?ts=${Date.now()}`;
+  const snapshotUrl = snapshotInfo?.url
+    ? `${snapshotInfo.url}?ts=${Date.now()}`
+    : undefined;
+
   console.log("Snapshot URL is:", snapshotUrl);
   const currentData = filteredData?.[filteredData.length - 1] || damData?.data[damData.data.length - 1];
 
@@ -320,11 +323,14 @@ const DamDetail = () => {
                     <CardTitle>Upstream View</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <img
-                      src={snapshotUrl}
-                      alt={`Snapshot of dam ${damData.name}`}
-                      className="w-full h-auto object-cover rounded-lg"
-                    />
+                    {/* Only render the <img> once snapshotInfo.url is available */}
+                    {snapshotInfo?.url && (
+                      <img
+                        src={`${snapshotInfo.url}?ts=${Date.now()}`}
+                        alt={`Snapshot of dam ${damData.name}`}
+                        className="w-full h-auto object-cover rounded-lg"
+                      />
+                    )}
                     {/* show timestamp once loaded */}
                     {!infoLoading && snapshotInfo?.lastModified && (
                       <div className="mt-2 text-sm text-gray-500">
