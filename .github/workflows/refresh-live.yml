@@ -3,7 +3,7 @@ name: Refresh live.json
 on:
   schedule:
     # run every 15 minutes
-    - cron: "*/15 * * * *"
+    - cron: "*/600 * * * *"
   workflow_dispatch:    # allow manual trigger too
 
 jobs:
