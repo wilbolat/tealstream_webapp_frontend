@@ -10,7 +10,8 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
-    "deploy": "git pull origin main && npm ci && npm run build && sudo nginx -s reload"
+    "deploy": "git pull origin main && npm ci && npm run build && sudo nginx -s reload",
+    "update:live": "node scripts/updateLiveJson.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

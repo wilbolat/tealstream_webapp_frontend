@@ -242,7 +242,7 @@ const DamDetail = () => {
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-gradient-to-br from-blue-50 to-teal-50 dark:from-black dark:to-slate-950">
       <Helmet>
-        <title>{damData.name} Dam Water Levels</title>
+        <title>{damData.name} Reservoir Levels</title>
         <meta name="description" content={`Current water level of ${damData.name} dam is ${currentData?.waterLevel} meters.`} />
         <meta name="keywords" content={`${damData.name} dam, water levels, dam storage, inflow, outflow, rainfall`} />
         <meta property="og:title" content={`${damData.name} Dam Water Levels | Real-time Monitoring`} />
