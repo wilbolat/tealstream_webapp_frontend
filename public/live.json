@@ -1,66 +1,65 @@
 {
-    "lastUpdate": "02.06.2025",
-    "dams": [
+  "lastUpdate": "05/08/2025",
+  "dams": [
+    {
+      "id": "19",
+      "name": "Coquitlam",
+      "officialName": "COQUITLAM DAM",
+      "MWL": "152.5",
+      "FRL": "151.8",
+      "spillwayElevation": "49.5",
+      "crestElevation": "53",
+      "liveStorageAtFRL": "58000",
+      "ruleLevel": "150.0",
+      "blueLevel": "145.0",
+      "orangeLevel": "148.0",
+      "redLevel": "150.5",
+      "latitude": 49.37197,
+      "longitude": -122.77808,
+      "dataSource": "wsc_08MH149",
+      "data": [
         {
-            "id": "19",
-            "name": "Coquitlam",
-            "officialName": "COQUITLAM DAM",
-            "MWL": "152.5",
-            "FRL": "151.8",
-            "spillwayElevation":"49.5",
-            "crestElevation":"53", 
-            "liveStorageAtFRL": "58000",
-            "ruleLevel": "150.0",
-            "blueLevel": "145.0",
-            "orangeLevel": "148.0",
-            "redLevel": "150.5",
-            "latitude": 49.37197,
-            "longitude": -122.77808,
-            "dataSource": "wsc_08MH149",
-            "data": [
-                {
-                    "date": "02.06.2025",
-                    "waterLevel": "846.70",
-                    "liveStorage": "0.165",
-                    "storagePercentage": "42.31%",
-                    "inflow": "15.63",
-                    "powerHouseDischarge": "15.08",
-                    "spillwayRelease": "0.00",
-                    "totalOutflow": "15.08",
-                    "rainfall": "1.00"
-                }
-            ]
-        },
-        {
-            "id": "20",
-            "name": "Harrison",
-            "officialName": "Harrison Lake",
-            "MWL": "12",             
-            "FRL": "11",
-            "spillwayElevation":"10",
-            "crestElevation":"12.5",             
-            "liveStorageAtFRL": "58000",
-            "ruleLevel": "10",       
-            "blueLevel": "10.5",
-            "orangeLevel": "11",
-            "redLevel": "12",
-            "latitude": 49.309167,
-            "longitude": -121.773611,
-            "dataSource": "wsc_08MH149",
-            "data": [
-                {
-                    "date": "01.01.2025",
-                    "waterLevel": "9.77",
-                    "liveStorage": "9.77",
-                    "storagePercentage": "65",
-                    "inflow": "100",
-                    "powerHouseDischarge": "0",
-                    "spillwayRelease": "0",
-                    "totalOutflow": "100",
-                    "rainfall": "0"
-                }
-            ]
+          "date": "01.07.2025",
+          "waterLevel": "49.83",
+          "liveStorage": "49.83",
+          "storagePercentage": "72",
+          "inflow": "56",
+          "powerHouseDischarge": "30",
+          "spillwayRelease": "0",
+          "totalOutflow": "30",
+          "rainfall": "0"
         }
-
-    ]
+      ]
+    },
+    {
+      "id": "20",
+      "name": "Harrison",
+      "officialName": "Harrison Lake",
+      "MWL": "12",
+      "FRL": "11",
+      "spillwayElevation": "10",
+      "crestElevation": "12.5",
+      "liveStorageAtFRL": "58000",
+      "ruleLevel": "10",
+      "blueLevel": "10.5",
+      "orangeLevel": "11",
+      "redLevel": "12",
+      "latitude": 49.309167,
+      "longitude": -121.773611,
+      "dataSource": "wsc_08MH149",
+      "data": [
+        {
+          "date": "03.07.2025",
+          "waterLevel": "10.22",
+          "liveStorage": "10.22",
+          "storagePercentage": "70.2",
+          "inflow": "100",
+          "powerHouseDischarge": "0",
+          "spillwayRelease": "0",
+          "totalOutflow": "100",
+          "rainfall": "0"
+        }
+      ]
+    }
+  ]
 }

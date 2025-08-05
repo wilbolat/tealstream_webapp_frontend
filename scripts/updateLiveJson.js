@@ -1,7 +1,13 @@
 // scripts/updateLiveJson.js
 import fs from "fs/promises";
 import path from "path";
-import { fetchHistoricalDamData } from "../src/lib/api"; // adjust path if needed
+// import { fetchHistoricalDamData } from "../src/lib/api"; // adjust path if needed
+async function fetchHistoricalDamData(damName) {
+  const filename = `${damName.replace(/\s+/g, "_")}.json`;
+  const filePath = path.resolve(process.cwd(), "public", "historic_data", filename);
+  const raw = await fs.readFile(filePath, "utf-8");
+  return JSON.parse(raw);
+}
 
 async function main() {
   // 1) load your current live.json metadata (so you keep lastUpdate, dams list, etc.)
