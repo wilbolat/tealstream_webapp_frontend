@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useRef, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useDamTimeSeries } from "@/hooks/useDamTimeSeries";
@@ -15,7 +15,7 @@ import { TrendChart } from "@/components/dam/TrendChart";
 import { Visualization } from "@/components/dam/Visualization";
 import { Helmet } from 'react-helmet';
 import CameraFeedCard from "@/components/dam/CameraFeedCard";
-
+import { Fullscreen, Minimize2 } from "lucide-react";
 
 const TIME_RANGE_STORAGE_KEY = 'dam-time-range';
 
@@ -59,6 +59,35 @@ const DamDetail = () => {
   const [referenceDate, setReferenceDate] = useState<Date>(new Date());
   const [isChangingRange, setIsChangingRange] = useState(false);
   const [visualizationIndex, setVisualizationIndex] = useState(0);
+  const imgContainerRef = useRef<HTMLDivElement>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  function toggleFullscreen() {
+    const el = imgContainerRef.current;
+    if (!el) return;
+
+    // enter fullscreen
+    if (!document.fullscreenElement) {
+      el.requestFullscreen?.()
+        .then(() => setIsFullscreen(true))
+        .catch(console.error);
+    }
+    // exit fullscreen
+    else {
+      document.exitFullscreen?.()
+        .then(() => setIsFullscreen(false))
+        .catch(console.error);
+    }
+  }
+
+  useEffect(() => {
+    function onFullScreenChange() {
+      setIsFullscreen(!!document.fullscreenElement);
+    }
+    document.addEventListener("fullscreenchange", onFullScreenChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", onFullScreenChange);
+    };
+  }, []);
 
   const { data: damData, isLoading, error } = useQuery({
     queryKey: ["dam-history", name],
@@ -228,6 +257,7 @@ const DamDetail = () => {
   const currentLevel = parseFloat(currentData.waterLevel);
   const redThreshold = parseFloat(damData.redLevel);
   const orangeThreshold = parseFloat(damData.orangeLevel);
+  const blueThreshold = parseFloat(damData.blueLevel);
 
   let currentAlert = "No Alert";
   if (!isNaN(currentLevel)) {
@@ -235,6 +265,8 @@ const DamDetail = () => {
       currentAlert = "Red Alert";
     } else if (currentLevel >= orangeThreshold) {
       currentAlert = "Orange Alert";
+    } else if (currentLevel >= blueThreshold) {
+      currentAlert = "Blue Alert";
     }
   }
 
@@ -275,9 +307,11 @@ const DamDetail = () => {
                       "px-2 py-1 rounded font-medium text-3xl " +
                       (currentAlert === "No Alert"
                         ? "bg-green-100 text-green-800"
-                        : currentAlert === "Orange Alert"
-                          ? "bg-yellow-100 text-yellow-800"
-                          : "bg-red-100 text-red-800")
+                        : currentAlert === "Blue Alert"
+                          ? "bg-blue-100 text-blue-800"
+                          : currentAlert === "Orange Alert"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-red-100 text-red-800")
                     }
                   >
                     {currentAlert}
@@ -325,11 +359,37 @@ const DamDetail = () => {
                   <CardContent>
                     {/* Only render the <img> once snapshotInfo.url is available */}
                     {snapshotInfo?.url && (
-                      <img
-                        src={`${snapshotInfo.url}?ts=${Date.now()}`}
-                        alt={`Snapshot of dam ${damData.name}`}
-                        className="w-full h-auto object-cover rounded-lg"
-                      />
+                      <div
+                        ref={imgContainerRef}
+                        className={
+                          isFullscreen
+                            ? "fixed inset-0 z-50 bg-black flex items-center justify-center"
+                            : "relative"
+                        }
+                      >
+                        {/* full-screen toggle button */}
+                        <button
+                          onClick={toggleFullscreen}
+                          className="absolute top-2 right-2 z-10 p-1 bg-white/80 rounded-full shadow hover:bg-white"
+                        >
+                          {isFullscreen ? (
+                            <Minimize2 className="w-5 h-5 text-gray-700" />
+                          ) : (
+                            <Fullscreen className="w-5 h-5 text-gray-700" />
+                          )}
+                        </button>
+
+                        {/* the snapshot image */}
+                        <img
+                          src={`${snapshotInfo.url}?ts=${Date.now()}`}
+                          alt={`Snapshot of dam ${damData.name}`}
+                          className={
+                            isFullscreen
+                              ? "object-contain w-full h-full"
+                              : "w-full h-auto object-cover rounded-lg"
+                          }
+                        />
+                      </div>
                     )}
                     {/* show timestamp once loaded */}
                     {!infoLoading && snapshotInfo?.lastModified && (

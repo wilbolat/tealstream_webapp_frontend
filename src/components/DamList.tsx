@@ -102,7 +102,7 @@ export default function DamList({ dams, isLoading, error }: DamListProps) {
       <Card className="mx-4 h-full flex flex-col overflow-hidden bg-background shadow-xl">
         <CardHeader className="p-4 border-b bg-muted">
           <div className="flex items-center gap-4">
-            <CardTitle className="flex-1 truncate">Lower Mainland Reservoirs</CardTitle>
+            <CardTitle className="flex-1 truncate">Metro Vancouver Dams</CardTitle>
             <ThemeToggle />
           </div>
           <div className="mt-4 flex gap-2">
