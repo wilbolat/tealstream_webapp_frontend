@@ -1,0 +1,105 @@
+name: Deploy live.json to Droplet
+
+on:
+  push:
+    branches: [ main ]
+    paths: [ 'public/live.json' ]
+  schedule:
+    - cron: '17 * * * *'   # optional hourly sync
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (no remote changes)'
+        required: false
+        default: 'false'
+
+env:
+  DOMAIN: metrovancouver.tealstream.ca
+  WEB_ROOT: /var/www/metrovancouver.tealstream.ca
+  APP_NAME: tealstream-server
+  NGINX_RELOAD: "false"   # static file; usually no reload needed
+  PM2_RELOAD: "false"     # flip to true only if Node reads live.json at start
+  DRY_RUN: ${{ inputs.dry_run || 'false' }}
+  SSH_HOST: ${{ secrets.SSH_HOST }}
+  SSH_USER: ${{ secrets.SSH_USER }}
+  SSH_PORT: ${{ secrets.SSH_PORT || 22 }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ensure live.json exists & valid
+        run: |
+          test -f public/live.json
+          python3 -m json.tool < public/live.json >/dev/null
+
+      - name: Prepare SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -p "${SSH_PORT}" -H "${SSH_HOST}" >> ~/.ssh/known_hosts
+
+      - name: Dry-run note
+        if: env.DRY_RUN == 'true'
+        run: echo "DRY RUN ENABLED – no remote changes."
+
+      - name: Upload to temp
+        if: env.DRY_RUN != 'true'
+        run: |
+          REMOTE_TMP="/root/tmp"
+          ssh -i ~/.ssh/id_ed25519 -p "${SSH_PORT}" "${SSH_USER}@${SSH_HOST}" "mkdir -p '${REMOTE_TMP}'"
+          scp -i ~/.ssh/id_ed25519 -P "${SSH_PORT}" public/live.json "${SSH_USER}@${SSH_HOST}:${REMOTE_TMP}/live.json.new"
+
+      - name: Atomic move + perms + optional reloads
+        if: env.DRY_RUN != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          REMOTE_TMP="/root/tmp"
+
+          ssh -i ~/.ssh/id_ed25519 -p "${SSH_PORT}" "${SSH_USER}@${SSH_HOST}" bash -lc "
+            set -euo pipefail
+
+            # Validate JSON on remote
+            python3 -m json.tool < \"${REMOTE_TMP}/live.json.new\" >/dev/null
+
+            # Backup existing (if any), then atomic move into place
+            if [ -f \"${WEB_ROOT}/live.json\" ]; then
+              sudo cp -a \"${WEB_ROOT}/live.json\" \"${WEB_ROOT}/live.json.$(date +%F-%H%M%S).bak\"
+            fi
+            sudo mv \"${REMOTE_TMP}/live.json.new\" \"${WEB_ROOT}/live.json\"
+            sudo chown root:root \"${WEB_ROOT}/live.json\"
+            sudo chmod 0644 \"${WEB_ROOT}/live.json\"
+
+            # Optional reloads
+            if [ \"${NGINX_RELOAD}\" = \"true\" ]; then
+              sudo nginx -t && sudo systemctl reload nginx
+            fi
+            if [ \"${PM2_RELOAD}\" = \"true\" ]; then
+              if command -v pm2 >/dev/null 2>&1; then
+                pm2 reload \"${APP_NAME}\" || true
+                pm2 save || true
+              fi
+            fi
+
+            # Post-deploy verification
+            stat -c \"%n %s bytes, mtime: %y\" \"${WEB_ROOT}/live.json\"
+            head -c 200 \"${WEB_ROOT}/live.json\" || true
+            python3 -m json.tool < \"${WEB_ROOT}/live.json\" >/dev/null
+          "
+
+      - name: Post-deploy check over HTTPS
+        if: env.DRY_RUN != 'true'
+        run: |
+          curl -fsSI "https://${{ env.DOMAIN }}/live.json" | sed -n '1,10p'
+          curl -fsS "https://${{ env.DOMAIN }}/live.json" | head -c 200 || true
+
+      - name: Job summary
+        if: always()
+        run: |
+          echo "Domain: https://${{ env.DOMAIN }}/live.json" >> $GITHUB_STEP_SUMMARY
+          echo "Dry run: $DRY_RUN" >> $GITHUB_STEP_SUMMARY
