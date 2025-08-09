@@ -95,8 +95,12 @@ jobs:
       - name: Post-deploy check over HTTPS
         if: env.DRY_RUN != 'true'
         run: |
-          curl -fsSI "https://${{ env.DOMAIN }}/live.json" | sed -n '1,10p'
-          curl -fsS "https://${{ env.DOMAIN }}/live.json" | head -c 200 || true
+          echo ">>> Checking headers..."
+          curl -v -I "https://${{ env.DOMAIN }}/live.json" 2>&1 | sed -n '1,15p'
+
+          echo ""
+          echo ">>> Checking first 20 lines of JSON..."
+          curl -s "https://${{ env.DOMAIN }}/live.json" | head -n 20
 
       - name: Job summary
         if: always()
