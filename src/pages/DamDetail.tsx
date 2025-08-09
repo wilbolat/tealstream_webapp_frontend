@@ -16,6 +16,10 @@ import { Visualization } from "@/components/dam/Visualization";
 import { Helmet } from 'react-helmet';
 import CameraFeedCard from "@/components/dam/CameraFeedCard";
 import { Fullscreen, Minimize2 } from "lucide-react";
+import { fetchLiveDamData } from "@/lib/api";
+
+
+
 
 const TIME_RANGE_STORAGE_KEY = 'dam-time-range';
 
@@ -94,6 +98,41 @@ const DamDetail = () => {
     queryFn: () => fetchHistoricalDamData(name || ""),
     enabled: !!name,
   });
+
+  // Live dam metadata query
+  const { data: live, isLoading: liveLoading } = useQuery({
+    queryKey: ["dams", "live"],
+    queryFn: fetchLiveDamData,
+  });
+
+  // Find the matching dam in live.json
+  const damMeta = live?.dams.find(
+    d => d.name.toLowerCase() === decodeURIComponent(name || "").toLowerCase()
+  );
+
+  // Merge live crest/spillway (and any other live fields) into damData for the UI
+  const mergedDamData = React.useMemo(() => {
+    if (!damData) return damData;
+    if (!damMeta) return damData;
+
+    // Prefer live values when present; fall back to historical
+  const crestElevation =
+    damMeta.crestElevation != null
+      ? Number(damMeta.crestElevation)
+      : (damData as any).crestElevation;
+
+  const spillwayElevation =
+    damMeta.spillwayElevation != null
+      ? Number(damMeta.spillwayElevation)
+      : (damData as any).spillwayElevation;
+
+
+    return {
+      ...damData,
+      crestElevation,
+      spillwayElevation,
+    };
+  }, [damData, damMeta]);
 
   const { loading: seriesLoading, series, latest } = useDamTimeSeries(damData || {});
 
@@ -272,7 +311,7 @@ const DamDetail = () => {
 
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden bg-gradient-to-br from-blue-50 to-teal-50 dark:from-black dark:to-slate-950">
+    <div className="h-screen flex flex-col overflow-hidden bg-teal-100/20 dark:bg-teal-900/10 dark:to-slate-950">
       <Helmet>
         <title>{damData.name} Reservoir Levels</title>
         <meta name="description" content={`Current water level of ${damData.name} dam is ${currentData?.waterLevel} meters.`} />
@@ -323,7 +362,7 @@ const DamDetail = () => {
 
           <DamStatusCards
             currentData={currentData}
-            damData={damData}
+            damData={mergedDamData}
             waterLevelStats={waterLevelStats}
           />
 
@@ -414,7 +453,7 @@ const DamDetail = () => {
                   data={visualizationData}
                   currentIndex={visualizationIndex}
                   onIndexChange={setVisualizationIndex}
-                  damData={damData}
+                  damData={mergedDamData}
                 />
               </div>
             </motion.div>

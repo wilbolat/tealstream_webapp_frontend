@@ -1,4 +1,5 @@
-export const getLiveDataUrl = () => '/live.json';
+export const getLiveDataUrl = () =>
+  `/live.json?v=${Math.floor(Date.now() / 60000)}`;
 export const getHistoricalDataUrl = (damName: string) =>
   `/historic_data/${damName.replace(/\s+/g, '_')}.json`;
 

@@ -19,6 +19,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { AnimatedNumber } from "@/components/ui/animated-number";
 import type { Dam } from "@/types/dam";
+import { useLiveData } from "@/hooks/useLiveData";
 
 type SortField = "name" | "waterLevel" | "freeboard";
 type SortDirection = "asc" | "desc";
@@ -57,12 +58,19 @@ const getAlertLabel = (status: string) => {
 };
 
 interface DamListProps {
-  dams: Dam[];
-  isLoading: boolean;
-  error: Error | null;
+  dams?: Dam[];
+  isLoading?: boolean;
+  error?: Error | null;
 }
 
-export default function DamList({ dams, isLoading, error }: DamListProps) {
+export default function DamList({ dams: propsDams, isLoading: propsLoading, error: propsError }: DamListProps) {
+    // Fetch live.json at runtime
+  const { data, loading, err } = useLiveData();
+
+  // Prefer props if passed, else fallback to live.json data
+  const dams = propsDams ?? data?.dams ?? [];
+  const isLoading = propsLoading ?? loading;
+  const error = propsError ?? err ?? null;
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [sortField, setSortField] = useState<SortField>("waterLevel");

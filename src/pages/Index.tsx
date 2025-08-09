@@ -57,11 +57,7 @@ const Index = () => {
               <Map dams={data?.dams || []} lastUpdate={data?.lastUpdate} />
             </div>
             <div className="h-full w-full overflow-hidden">
-              <DamList
-                dams={data?.dams || []}
-                isLoading={isLoading}
-                error={error as Error}
-              />
+              <DamList/>
             </div>
           </SplitPane>
         </div>
