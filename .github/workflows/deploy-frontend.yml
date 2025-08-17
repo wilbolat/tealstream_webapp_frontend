@@ -75,14 +75,15 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           port: ${{ secrets.SSH_PORT || 22 }}
           key: ${{ secrets.SSH_KEY }}
+          envs: DEPLOY_PATH,DIST_TAR
           script: |
             set -euo pipefail
-            cd "${DEPLOY_PATH}"
+            cd "$DEPLOY_PATH"
 
             # unpack into temp dir
             rm -rf site_tmp
             mkdir -p site_tmp
-            tar -xzf "${DIST_TAR}" -C site_tmp
+            tar -xzf "$DIST_TAR" -C site_tmp
 
             # rotate old -> quick rollback
             rm -rf site_old
@@ -93,7 +94,7 @@ jobs:
               mkdir -p site
               shopt -s dotglob
               for f in *; do
-                if [ "$f" != "site" ] && [ "$f" != "site_old" ] && [ "$f" != "site_tmp" ] && [ "$f" != "${DIST_TAR}" ]; then
+                if [ "$f" != "site" ] && [ "$f" != "site_old" ] && [ "$f" != "site_tmp" ] && [ "$f" != "$DIST_TAR" ]; then
                   mv "$f" site/
                 fi
               done
@@ -103,7 +104,7 @@ jobs:
             # now swap: new -> root
             shopt -s dotglob
             for f in *; do
-              if [ "$f" != "site" ] && [ "$f" != "site_old" ] && [ "$f" != "site_tmp" ] && [ "$f" != "${DIST_TAR}" ]; then
+              if [ "$f" != "site" ] && [ "$f" != "site_old" ] && [ "$f" != "site_tmp" ] && [ "$f" != "$DIST_TAR" ]; then
                 rm -rf "$f"
               fi
             done
@@ -111,7 +112,7 @@ jobs:
             shopt -u dotglob
 
             # cleanup bundle
-            rm -f "${DIST_TAR}" || true
+            rm -f "$DIST_TAR" || true
             rmdir site_tmp || true
 
             # sanity check & reload nginx
