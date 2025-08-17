@@ -1,0 +1,119 @@
+name: Build & Deploy Frontend
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - "src/**"
+      - "index.html"
+      - "package.json"
+      - "package-lock.json"
+      - "vite.config.*"
+      - "tsconfig*.json"
+  workflow_dispatch:
+
+concurrency:
+  group: frontend-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      # Build-time envs (add more as needed)
+      VITE_MAPBOX_TOKEN: ${{ secrets.VITE_MAPBOX_TOKEN }}
+
+      # Server path nginx serves from
+      DEPLOY_PATH: /var/www/metrovancouver.tealstream.ca
+      DIST_TAR: dist.tar.gz
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install
+        run: npm ci --no-audit --no-fund
+
+      - name: Check Mapbox token present
+        run: |
+          if [ -z "${VITE_MAPBOX_TOKEN}" ]; then
+            echo "VITE_MAPBOX_TOKEN is empty"; exit 1;
+          else
+            echo "VITE_MAPBOX_TOKEN is set";
+          fi
+        env:
+          VITE_MAPBOX_TOKEN: ${{ secrets.VITE_MAPBOX_TOKEN }}
+
+      - name: Build
+        env:
+          VITE_MAPBOX_TOKEN: ${{ secrets.VITE_MAPBOX_TOKEN }}
+        run: |
+          export NODE_OPTIONS="--max_old_space_size=1024"
+          npm run build
+
+      - name: Archive dist
+        run: tar -czf "$DIST_TAR" -C dist .
+
+      - name: Upload dist
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          key: ${{ secrets.SSH_KEY }}
+          source: "${{ env.DIST_TAR }}"
+          target: "${{ env.DEPLOY_PATH }}/"
+
+      - name: Activate on server (atomic swap + reload)
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            set -euo pipefail
+            cd "${DEPLOY_PATH}"
+
+            # unpack into temp dir
+            rm -rf site_tmp
+            mkdir -p site_tmp
+            tar -xzf "${DIST_TAR}" -C site_tmp
+
+            # rotate old -> quick rollback
+            rm -rf site_old
+            if [ -d site ]; then mv site site_old; fi
+
+            # move current live into 'site' (so root stays clean)
+            if [ ! -d site ]; then
+              mkdir -p site
+              shopt -s dotglob
+              for f in *; do
+                if [ "$f" != "site" ] && [ "$f" != "site_old" ] && [ "$f" != "site_tmp" ] && [ "$f" != "${DIST_TAR}" ]; then
+                  mv "$f" site/
+                fi
+              done
+              shopt -u dotglob
+            fi
+
+            # now swap: new -> root
+            shopt -s dotglob
+            for f in *; do
+              if [ "$f" != "site" ] && [ "$f" != "site_old" ] && [ "$f" != "site_tmp" ] && [ "$f" != "${DIST_TAR}" ]; then
+                rm -rf "$f"
+              fi
+            done
+            mv site_tmp/* .
+            shopt -u dotglob
+
+            # cleanup bundle
+            rm -f "${DIST_TAR}" || true
+            rmdir site_tmp || true
+
+            # sanity check & reload nginx
+            sudo nginx -t
+            sudo nginx -s reload
