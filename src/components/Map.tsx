@@ -19,6 +19,13 @@ const Map = ({ dams, lastUpdate }: MapProps) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapboxMap = useRef<mapboxgl.Map | null>(null);
 
+  // marker element shape used to store React root and metadata
+  type MarkerDiv = HTMLDivElement & {
+    damName?: string;
+    waterLevel?: number;
+  _root?: import('react-dom/client').Root;
+  };
+
   useEffect(() => {
     if (!mapRef.current) return;
 
@@ -50,16 +57,16 @@ const Map = ({ dams, lastUpdate }: MapProps) => {
       const zoom = mapboxMap.current?.getZoom() || 0;
       const viewportWidth = window.innerWidth;
       const markers = document.querySelectorAll('.mapboxgl-marker');
-      
+
       markers.forEach(marker => {
-        const markerDiv = marker.querySelector('.dam-marker')?.parentElement;
+        const markerDiv = marker.querySelector('.dam-marker')?.parentElement as MarkerDiv | null;
         if (markerDiv) {
-          const root = (markerDiv as any)._root;
+          const root = markerDiv._root;
           if (root) {
             root.render(
               <DamMarker 
-                damName={(markerDiv as any).damName || ''}
-                waterLevel={(markerDiv as any).waterLevel || 0}
+                damName={markerDiv.damName || ''}
+                waterLevel={markerDiv.waterLevel || 0}
                 isCollapsed={zoom < (viewportWidth < 768 ? 10 : 9)}
               />
             );
@@ -104,13 +111,13 @@ const Map = ({ dams, lastUpdate }: MapProps) => {
 
     // Add markers for each dam
     dams.forEach(dam => {
-      const markerDiv = document.createElement('div');
+      const markerDiv = document.createElement('div') as MarkerDiv;
       markerDiv.style.transform = `scale(${markerScale})`; 
       const waterLevelPercentage = parseFloat(dam.data[0]?.storagePercentage || "0");
       
       // Store data on the div for updates
-      (markerDiv as any).damName = dam.name;
-      (markerDiv as any).waterLevel = waterLevelPercentage;
+      markerDiv.damName = dam.name;
+      markerDiv.waterLevel = waterLevelPercentage;
       
       const marker = new mapboxgl.Marker({
         element: markerDiv
@@ -119,8 +126,8 @@ const Map = ({ dams, lastUpdate }: MapProps) => {
         .addTo(mapboxMap.current!);
 
       // Initial render
-      (markerDiv as any)._root = createRoot(markerDiv);
-      (markerDiv as any)._root.render(
+  markerDiv._root = createRoot(markerDiv);
+  markerDiv._root.render(
         <DamMarker 
           damName={dam.name} 
           waterLevel={waterLevelPercentage}
@@ -128,8 +135,8 @@ const Map = ({ dams, lastUpdate }: MapProps) => {
         />
       );
 
-      // click handler
-      markerDiv.addEventListener('click', () => {
+  // click handler
+  markerDiv.addEventListener('click', () => {
         navigate(`/${dam.name}`);
       });
     });
@@ -150,7 +157,8 @@ const Map = ({ dams, lastUpdate }: MapProps) => {
       window.removeEventListener('resize', handleResize);
       const markers = document.querySelectorAll('.mapboxgl-marker');
       markers.forEach(marker => {
-        const root = (marker as any)._root;
+        const md = marker as unknown as MarkerDiv;
+        const root = md._root;
         if (root) {
           root.unmount();
         }
