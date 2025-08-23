@@ -1,64 +1,58 @@
 // server/spacesClient.js
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
-import dotenv from "dotenv";
 import AWS from "aws-sdk";
+import dotenv from "dotenv";
 
-// 1) load env
 dotenv.config();
 
-// 2) derive __dirname in ESM
-const __filename = fileURLToPath(import.meta.url);
-const __dirname  = path.dirname(__filename);
+/**
+ * DigitalOcean Spaces client
+ * SPACES_ENDPOINT should be like: "tor1.digitaloceanspaces.com" (no protocol)
+ */
+const endpoint = new AWS.Endpoint(process.env.SPACES_ENDPOINT);
 
-// 3) read & parse public/live.json
-const LIVE_JSON_PATH = path.resolve(__dirname, "../public/live.json");
-let damLookup = {};
-
-try {
-  const raw = fs.readFileSync(LIVE_JSON_PATH, "utf8");
-  const all = JSON.parse(raw).dams;             // your JSON has a top-level "dams" array
-  damLookup = all.reduce((acc, dam) => {
-    acc[dam.id] = dam.name;                     // map "19"→"Coquitlam", "20"→"Harrison", etc.
-    return acc;
-  }, {});
-  console.log("✅ damLookup loaded:", damLookup);
-} catch (err) {
-  console.warn("⚠️ failed to load live.json:", err.message);
-}
-
-// 4) configure DO Spaces client
-const spacesEndpoint = new AWS.Endpoint(process.env.SPACES_ENDPOINT);
 export const s3 = new AWS.S3({
-  endpoint: spacesEndpoint,
+  endpoint,
   accessKeyId: process.env.SPACES_KEY,
   secretAccessKey: process.env.SPACES_SECRET,
+  signatureVersion: "v4",
+  s3ForcePathStyle: false,
 });
+
 export const BUCKET = process.env.SPACES_BUCKET;
 
-// 5) upload helper
-export async function uploadImageToSpaces(damId, buffer) {
-  const name      = damLookup[damId] || `dam_${damId}`;
-  const timestamp = new Date().toISOString();
-  const historyKey = `images/${damId}/${name}_${timestamp}.jpg`;
-  const latestKey  = `images/${damId}/latest.jpg`;
+/**
+ * Upload image to Spaces under images/<folder>/.
+ * We save a history copy (timestamped) and update latest.jpg.
+ *
+ * @param {string} folder   normalized folder (prefer numeric dam id, e.g. "19")
+ * @param {Buffer} buffer   image bytes
+ * @param {string} mime     content type, e.g. "image/jpeg" (optional)
+ */
+export async function uploadImageToSpaces(folder, buffer, mime = "image/jpeg") {
+  const iso = new Date().toISOString().replace(/[:]/g, "-"); // safe-ish for keys
+  const historyKey = `images/${folder}/${iso}.jpg`;
+  const latestKey  = `images/${folder}/latest.jpg`;
 
-  // 5a) write history copy
+  // 1) history copy
   await s3.putObject({
     Bucket: BUCKET,
     Key: historyKey,
     Body: buffer,
-    ContentType: "image/jpeg",
+    ContentType: mime,
     ACL: "public-read",
+    CacheControl: "public, max-age=600", // 10 minutes; tune as you like
   }).promise();
 
-  // 5b) update latest pointer
-  return s3.putObject({
+  // 2) latest pointer
+  await s3.putObject({
     Bucket: BUCKET,
     Key: latestKey,
     Body: buffer,
-    ContentType: "image/jpeg",
+    ContentType: mime,
     ACL: "public-read",
+    CacheControl: "public, max-age=60",  // keep lower so latest refreshes faster
   }).promise();
+
+  // Return the public URL for latest
+  return `https://${BUCKET}.${process.env.SPACES_ENDPOINT}/${latestKey}`;
 }
